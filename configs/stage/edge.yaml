@@ -1,0 +1,4 @@
+# stage/edge.yaml
+name: edge
+input_dir: /data/frames
+output_dir: /data/edges

@@ -1,0 +1,10 @@
+hydra-core==1.4.0rc2
+omegaconf==2.4.1rc1
+pypyr==5.9.1
+python-dateutil==3.0.0
+pyyaml==6.0.3
+ruamel-yaml==0.19.1
+six==1.17.0
+tomli==2.5.0
+tomli-w==1.2.0
+tzdata==2026.5

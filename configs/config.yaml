@@ -1,0 +1,4 @@
+# config.yaml
+defaults:
+  - stage: edge
+  - _self_
