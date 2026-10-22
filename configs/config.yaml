@@ -2,3 +2,4 @@
 defaults:
   - stage: edge
   - _self_
+debug: true

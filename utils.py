@@ -1,6 +1,5 @@
 import numpy as np
 import cv2
-import os
 from pathlib import Path
 
 def get_frame_buffer(target: str, frames: int = -1) -> np.ndarray:
@@ -34,7 +33,7 @@ def get_frame_buffer(target: str, frames: int = -1) -> np.ndarray:
         frame_buffer[frame_index] = frame
 
         # exit loop if video finished or target frames reached
-        if not ret or frame_index == (frame_count - 1):
+        if not ret or frame_index == (frames - 1):
             break
         else:
             frame_index += 1
