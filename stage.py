@@ -1,16 +1,7 @@
-# this class allows the lazy loading of specific libraries
-# it also allows dyanmic configurations through hydra - changing the parameters of a single step
-# is done through the corresponding config
-#
-import hydra
-from pathlib import Path
 from abc import ABC, abstractmethod
 from omegaconf import DictConfig, OmegaConf
-import os
 import logging
 import time
-
-PROJECT_ROOT = os.getenv("COSMOS_ROOT", "/workspace/") # defaults to the docker container root
 
 class PipeplineStageError(Exception):
 
@@ -18,31 +9,33 @@ class PipeplineStageError(Exception):
         self.message = f"Stage {name} failed after {time:.2f}. Traceback:\n{message}"
         super().__init__(self.message)
 
-class Stage(object):
+class Stage(ABC):
     config_name: str = "config"
 
     def __init__(self, config: DictConfig, stage: str = "") -> None:
         self.config = config
         self.stage = stage
+        self.name = type(self).__name__
+        self.logger = logging.getLogger(self.name)
 
     def run(self) -> None:
-        name = type(self).__name__
         start_time = time.perf_counter()
 
-        logger = logging.getLogger(name) # get the logger of the class being called
+        self.logger.info("Starting stage: %s", self.name)
 
-        logger.info("Starting stage: %s", name)
+        if self.config.debug:
+            self.logger.info("Loaded Config for (with overrides) for %s:\n%s", self.name, OmegaConf.to_yaml(self.config.stage))
 
         try:
 
             self._run()
         except Exception as e:
             failure_time = time.perf_counter() - start_time
-            logger.exception("Stage failed: %s after %.2fs", name, failure_time)
-            raise PipeplineStageError(str(e), name, failure_time)
+            self.logger.exception("Stage failed: %s after %.2fs", self.name, failure_time)
+            raise PipeplineStageError(str(e), self.name, failure_time)
         else:
             completion_time = time.perf_counter() - start_time
-            logger.info("Stage completed: %s in %.2fs", name, completion_time)
+            self.logger.info("Stage completed: %s in %.2fs", self.name, completion_time)
 
     @abstractmethod
     def _run(self) -> None:
