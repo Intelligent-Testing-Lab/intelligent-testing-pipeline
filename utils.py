@@ -1,45 +1,52 @@
-import numpy as np
 import cv2
-from pathlib import Path
+import numpy as np
 
 def get_frame_buffer(target: str, frames: int = -1) -> np.ndarray:
-    """
-    Returns a frames length buffer. If set to -1 its the total length of the video.
-    If frames is more than total framecount, return framecount
+    """Read a video into a ``(N, H, W, 3)`` uint8 BGR frame buffer.
+
+    ``frames`` selects how many frames to read:
+        -1   -> all frames (default)
+        > 0  -> the first ``frames`` frames (clamped to the video's frame count)
+        < -1 -> ``frame_count + frames`` frames (i.e. all but the last ``abs(frames)``)
+        0    -> raises ``ValueError``
+
+    Raises:
+        ValueError: if the video cannot be opened or ``frames`` is invalid.
     """
 
     cap = cv2.VideoCapture(target)
 
     if not cap.isOpened():
-        print("Failed to open video: is the path correct?")
+        raise ValueError(f"Failed to open video: is the path correct? {target!r}")
 
-    frame_count = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
-    if frames > frame_count or frames == -1:
-        frames = frame_count
-    elif frames < -1:
-        frames = frame_count + frames
-    elif frames == 0:
-        print("Cannot get zero frames from video")
+    try:
+        frame_count = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
 
-    h = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
-    w = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
-
-    frame_buffer = np.ndarray((frames, h,w, 3), dtype=np.uint8)
-
-    frame_index = 0
-    while True:
-        ret, frame = cap.read()
-
-        frame_buffer[frame_index] = frame
-
-        # exit loop if video finished or target frames reached
-        if not ret or frame_index == (frames - 1):
-            break
+        if frames == -1:
+            n = frame_count
+        elif frames < -1:
+            n = max(1, frame_count + frames)
+        elif frames == 0:
+            raise ValueError("Cannot read zero frames from a video")
         else:
-            frame_index += 1
+            n = min(frames, frame_count)
 
-    cap.release()
-    return frame_buffer
+        h = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
+        w = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
+
+        frame_buffer = np.empty((n, h, w, 3), dtype=np.uint8)
+
+        index = 0
+        while index < n:
+            ret, frame = cap.read()
+            if not ret:
+                break
+            frame_buffer[index] = frame
+            index += 1
+
+        return frame_buffer[:index]
+    finally:
+        cap.release()
 
 
 def save_mp4(
@@ -68,21 +75,3 @@ def save_mp4(
         writer.write(frame)
 
     writer.release()
-
-def validate_path(path: str, is_file: bool = True, create_dir: bool = False) -> Path:
-    """
-    Takes in a path string and validates if it exists and is the correct type (directory or file - symlinks not supported).
-    If the supplied path is a directory that doesn't exist, it will be automatically created.
-
-    Returns pathlib Path object
-    """
-
-    path_obj = Path(path)
-
-    if not path_obj.exists():
-        if is_file:
-            raise FileNotFoundError(f"File {path_obj} doesn't exist")
-        elif create_dir and not is_file:
-            path_obj.mkdir(parents=True, exist_ok=True)
-
-    return path_obj
