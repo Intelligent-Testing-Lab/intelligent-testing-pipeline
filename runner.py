@@ -110,8 +110,6 @@ def get_executor(name: str) -> Executor:
 def run_pipeline(pipeline: Pipeline, executor: Executor | None = None) -> None:
     """Run the pipeline's steps in order; each step's units run in parallel.
 
-    A step is skipped if it declares a ``metric`` that is not in
-    ``pipeline.metrics``. Any failed unit fails the pipeline (current behaviour).
     The batch is resolved lazily so a fully-skipped pipeline does not require it.
     """
     executor = executor or get_executor(pipeline.executor)
@@ -120,11 +118,6 @@ def run_pipeline(pipeline: Pipeline, executor: Executor | None = None) -> None:
 
     # again, refactor this. Metrics are cosmos-transfer specific
     for step in pipeline.steps:
-        if step.metric is not None:
-            if pipeline.metrics is not None and step.metric not in pipeline.metrics:
-                logger.info("Skipping step %s (metric %s not selected)", step.stage, step.metric)
-                continue
-
         if items is None:
             items = resolve_batch(pipeline.batch)
             logger.info(
@@ -170,7 +163,6 @@ def _step_from_dict(s: dict) -> Step:
         parallelism=parallelism,
         batch_size=s.get("batch_size"),
         interpreter=s.get("interpreter"),
-        metric=s.get("metric"),
         overrides=list(s.get("overrides", []) or []),
         env=dict(s.get("env", {}) or {}),
         slurm=s.get("slurm"),
@@ -187,7 +179,6 @@ def load_pipeline(path: str | Path) -> Pipeline:
         steps=steps,
         executor=data.get("executor", "local"),
         batch=dict(data.get("batch", {}) or {}),
-        metrics=data.get("metrics"),
         default_interpreter=data.get("interpreter"),
         default_cwd=data.get("cwd"),
     )

@@ -1,27 +1,23 @@
 # config.yaml
 defaults:
-  - stage: edge
+  - stage: launch_carla
   - _self_
 debug: true
 
-# --- pipeline mode: ``python -m intelligent_pipeline pipeline=<name>`` ---
-# When ``pipeline`` is set the pipeline runner (runner.py) takes over instead of
-# the single-stage mode. Run-level knobs below (CLI-overridable) drive it; the
-# step definitions live in configs/pipelines/<name>.yaml.
-pipeline: null        # pipeline name (configs/pipelines/<name>.yaml); null = stage mode
+pipeline: null        # pipeline name (configs/pipelines/<name>.yaml); null runs a single stage
 executor: null        # local | slurm | ray  (null = use the pipeline YAML's executor)
-metrics: null         # subset of eval stages to run (null = all); e.g. "lpips,ssim"
 interpreter: null     # default interpreter for steps that omit one (else current python)
 
-# Shared per-item context. Every stage reads from here. ``output_dir`` is the
-# unit of work (one recorded scenario); the rest are derived from it. A pipeline
+# Shared per-item context.
+# Every stage reads from here. ``output_dir`` is the unit of work.  A pipeline
 # batch is a list of these ``output_dir`` values.
 run:
   output_dir: /tmp/cosmos_transfer/run
-  # Micro-batch hint forwarded to a step's stage (run.batch_size) when the step sets
-  # a batch_size. Stages that ignore it treat it as a no-op; inference today
-  # generates one sample at a time (cosmos enforces unique sample names).
+
   batch_size: null
+
+  # per work-unit inputs, derived from the source run.output_dir
+  #
   rgb_input: ${run.output_dir}/sensor_recordings/front_rgb/front_rgb.mp4
   semantic_input: ${run.output_dir}/sensor_recordings/front_semantic_cityscapes/front_semantic_cityscapes.mp4
   depth_input: ${run.output_dir}/sensor_recordings/front_depth_log/front_depth_log.mp4
@@ -33,6 +29,8 @@ run:
   generation_config: ${run.output_dir}/generation_config.json
   generated_video: ${run.output_dir}/guided_generation.mp4
   results_file: ${run.output_dir}/results.json
+
+
   # --- evaluation inputs / outputs (defaults match the original) ---
   # clipqa_video is a single video; the user decides whether it is the
   # generated video or the original RGB.

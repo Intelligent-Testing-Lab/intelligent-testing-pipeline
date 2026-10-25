@@ -1,0 +1,6 @@
+name: "launch_carla"
+run_cmd: "/home/davidg/data/carla/0.9.15/CarlaUE4/Binaries/Linux/CarlaUE4-Linux-Shipping CarlaUE4"
+quality: "Epic"
+host: "127.0.0.1"
+port_min: 2000
+port_max: 10000

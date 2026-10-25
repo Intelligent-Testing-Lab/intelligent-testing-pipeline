@@ -52,7 +52,6 @@ class Step:
     parallelism: Parallelism = field(default_factory=Parallelism)
     batch_size: int | None = None  # forwarded to the stage as run.batch_size (micro-batch)
     interpreter: str | None = None  # python interpreter/venv to run the stage in
-    metric: str | None = None  # if set, the step runs only when this metric is selected
     overrides: list[str] = field(default_factory=list)  # extra hydra overrides
     env: dict = field(default_factory=dict)  # extra env for the unit (e.g. CUDA_VISIBLE_DEVICES)
     slurm: dict | None = None  # carried for SlurmExecutor (command + opaque options)
@@ -67,7 +66,6 @@ class Pipeline:
     steps: list[Step]
     executor: str = "local"  # local | slurm | ray
     batch: dict = field(default_factory=dict)  # one of {dirs, manifest, glob}
-    metrics: list[str] | None = None  # if set, only steps whose metric is in this run
     default_interpreter: str | None = None  # fallback interpreter for steps that omit one
     default_cwd: str | None = None  # working dir for the launched stage subprocesses
 

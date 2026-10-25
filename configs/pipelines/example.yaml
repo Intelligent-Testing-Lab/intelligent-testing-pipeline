@@ -1,5 +1,10 @@
 steps:
-  - stage: prompt
+  - stage: launch_carla
     parallelism: per_item
-    interpreter: /venvs/light/bin/python
-    slurm: {options: {--cpus-per-task: 4}}
+    interpreter: /home/davidg/workspace/research_assistant/intelligent_pipeline/.venv/bin/python
+  - stage: edge
+    parallelism: per_item
+    interpreter: /home/davidg/workspace/research_assistant/intelligent_pipeline/.venv/bin/python
+  - stage: cleanup_carla
+    parallelism: per_item
+    interpreter: /home/davidg/workspace/research_assistant/intelligent_pipeline/.venv/bin/python
