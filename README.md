@@ -72,7 +72,6 @@ A pipeline is a YAML of ordered steps in `configs/pipelines/<name>.yaml`, run vi
 python -m intelligent_pipeline pipeline=cosmos_transfer \
   batch.glob=/data/.../test_3/* \
   executor=local \
-  metrics=lpips,ssim
 ```
 
 | Knob (CLI / `configs/config.yaml`) | Meaning | Default |
@@ -80,7 +79,6 @@ python -m intelligent_pipeline pipeline=cosmos_transfer \
 | `pipeline` | pipeline name (`configs/pipelines/<name>.yaml`) | `null` (single-stage mode) |
 | `batch.dirs` / `batch.manifest` / `batch.glob` | the batch of output dirs (exactly one) | required to run |
 | `executor` | `local` \| `slurm` \| `ray` | the pipeline's, else `local` |
-| `metrics` | subset of eval steps to run (e.g. `lpips,ssim`) | `null` = all |
 | `interpreter` | default interpreter for steps that omit one | current python |
 
 ### Steps
@@ -93,7 +91,6 @@ steps:
     batch_size: 8            # optional: forwarded to the stage as run.batch_size
     interpreter: /venvs/light/bin/python   # venv this stage runs in
     env: {CUDA_VISIBLE_DEVICES: "0"}       # optional extra env for the unit
-    metric: lpips            # optional: step runs only if `lpips` is in `metrics`
     overrides: [run.results_file=/shared/results.json]  # optional extra hydra overrides
     slurm: {command: srun, options: {--cpus-per-task: 8}}  # for the SLURM executor
     ray:   {num_gpus: 1, num_cpus: 16}                      # for the Ray executor
@@ -153,7 +150,6 @@ Run it (local executor, a subset of metrics):
 python -m intelligent_pipeline pipeline=cosmos_transfer \
   batch.glob=/data/cosmos/outputs/scratch/test_3/* \
   executor=local \
-  metrics=lpips,ssim,iou
 ```
 Or on SLURM / Ray:
 ```bash
@@ -161,10 +157,6 @@ python -m intelligent_pipeline pipeline=cosmos_transfer batch.glob=... executor=
 python -m intelligent_pipeline pipeline=cosmos_transfer batch.glob=... executor=ray
 ```
 
-Each eval stage **appends** its metric to the shared results file (default
-`<output_dir>/results.json`, set `run.results_file` to share one), so one file
-accumulates every metric for an item. `eval_clipqa` scores a single video -- set
-`run.clipqa_video` to the generated or the original RGB, your choice.
 
 ## Tests
 
