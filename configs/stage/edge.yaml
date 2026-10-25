@@ -1,4 +1,16 @@
-# stage/edge.yaml
 name: edge
-input_dir: /data/frames
-output_dir: /data/edges
+# Canny edge-detection parameters, applied to the RGB input video.
+canny:
+  min_threshold: 10
+  max_threshold: 50
+  kernel_size: 3
+  gaussian_kernel: 3
+  gaussian_sigma: 1.4
+  gradient_func: true
+  blur: true
+  adjust_image_features: true
+  brightness: 50
+  contrast: 1.0
+# Tolerance used to detect the white ROI pixels (values are 0/255, so 255 == "white").
+roi_tolerance: 255
+fps: 20

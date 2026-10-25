@@ -1,0 +1,75 @@
+# Step definitions for the cosmos_transfer pipeline.
+#
+# Run with (pipeline mode):
+#   python -m intelligent_pipeline pipeline=cosmos_transfer \
+#     batch.glob=/data/.../test_3/*  executor=local  metrics=lpips,ssim
+#
+# Run-level knobs (batch, executor, metrics, default interpreter) come from
+# configs/config.yaml and the CLI overrides above -- NOT from this file. This
+# file only defines the STEPS and their per-step config.
+#
+# Parallelism (per step):
+#   parallelism: per_item            -> one instance per item (data parallelism)
+#   parallelism: {instances: N}      -> N instances; items round-robin-balanced
+#   batch_size: B                    -> forwarded to the stage as run.batch_size
+#   env: {K: V}                      -> extra environment for the unit (e.g. CUDA_VISIBLE_DEVICES)
+#
+# Each step's `slurm` / `ray` blocks are opaque backend config consumed by the
+# corresponding executor (SLURM first, then Ray). `interpreter` is the venv the
+# stage runs in (falling back to the global `interpreter`, then the current python).
+steps:
+  - stage: prompt
+    parallelism: per_item
+    interpreter: /venvs/light/bin/python
+    slurm: {options: {--cpus-per-task: 4}}
+
+  - stage: seg_mask
+    parallelism: per_item
+    interpreter: /venvs/light/bin/python
+    slurm: {options: {--cpus-per-task: 8, --gres: "gpu:1"}}
+
+  - stage: edge
+    parallelism: per_item
+    interpreter: /venvs/light/bin/python
+    slurm: {options: {--cpus-per-task: 8, --gres: "gpu:1"}}
+
+  # Inference runs as a fixed number of resident instances (model loaded once per
+  # instance); items are balanced across them. batch_size is a micro-batch hint
+  # forwarded as run.batch_size (no-op for inference today: cosmos forces one
+  # sample per generate() call); it exists so a backend (e.g. Ray actors) can chunk
+  # work per instance.
+  - stage: inference
+    parallelism: {instances: 3}
+    batch_size: 8
+    interpreter: /venvs/cosmos/bin/python
+    slurm: {command: sbatch, options: {--gres: "gpu:1", --cpus-per-task: 16, --time: "02:00:00"}}
+    ray: {num_gpus: 1, num_cpus: 16}
+
+  # Eval stages: each runs only when its metric is in the selected `metrics` set.
+  - stage: eval_lpips
+    metric: lpips
+    parallelism: per_item
+    slurm: {options: {--gres: "gpu:1"}}
+    ray: {num_gpus: 1}
+
+  - stage: eval_clipqa
+    metric: clipqa
+    parallelism: per_item
+    slurm: {options: {--gres: "gpu:1"}}
+    ray: {num_gpus: 1}
+
+  - stage: eval_ssim
+    metric: ssim
+    parallelism: per_item
+    slurm: {options: {--gres: "gpu:1"}}
+    ray: {num_gpus: 1}
+
+  - stage: eval_iou
+    metric: iou
+    parallelism: per_item
+    slurm: {options: {--cpus-per-task: 8}}
+
+  - stage: eval_iou_temporal
+    metric: iou_temporal
+    parallelism: per_item
+    slurm: {options: {--cpus-per-task: 8}}

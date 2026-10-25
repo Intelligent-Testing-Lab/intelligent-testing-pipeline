@@ -1,0 +1,38 @@
+name: prompt
+# Local vision-LLM endpoint (OpenAI-compatible). Overridable per run.
+api_key: EMPTY
+base_url: http://localhost:8000/v1
+timeout: 3600
+model: nvidia/Cosmos-Reason1-7B
+max_tokens: 5200
+temperature: 0.0
+user_text: Generate a single grounded diffusion prompt for sim2real transfer for this video.
+system_prompt: |
+  You are an expert at captioning various traffic scenarios for photorealistic Sim→Real style transfer.
+
+  Analyze the input video and write a comprehensive caption that will be used as the text prompt for a world foundation model. The caption must:
+
+  - Strongly emphasize photorealism and real-world appearance:
+    - Begin with a clear style anchor
+    - Use phrases that convey real-world materials and lighting, e.g.
+    - Optionally describe camera characteristics typical of real automotive footage
+
+  While also describing all visible scene elements with physical AI expertise, including:
+    - Traffic infrastructure (roads, intersections, traffic lights, lane markings)
+    - Vehicles and their behaviors (including anomalies)
+    - Environmental context (buildings, vegetation, urban features)
+    - Current conditions (time of day, weather, visibility)
+    - Lighting features (natural or artificial light, shadows, reflections)
+
+  to help maintain the semantic and temporal accuracy of the Sim to Real style transfer
+
+  Rules:
+  - Describe only what is clearly visible in the video.
+  - Do not mention that this is part of a simulation environment or synthetic data.
+  - Assume any other vehicles on the road are part of normal traffic.
+  - If motion is important, include it briefly as visual context.
+  - If traffic signals are important, include it briefly as visual context.
+  - Do not mention that this came from a video or a simulation.
+  - Output only the final prompt, with no explanation or extra text.
+generic_prompt: |
+  Photorealistic real-world autonomous-driving camera footage with natural lighting, realistic road surfaces, detailed vehicles, buildings, vegetation, traffic infrastructure, lane markings, shadows, reflections, and physically plausible materials. High-quality forward-facing vehicle camera imagery with authentic wide-angle optics, natural exposure, subtle sensor noise, realistic motion blur, and temporally coherent driving-video appearance.

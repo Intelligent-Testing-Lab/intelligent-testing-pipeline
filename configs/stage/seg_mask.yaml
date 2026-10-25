@@ -1,0 +1,10 @@
+name: seg_mask
+# CARLA ground-truth semantic class IDs (raw_frames.npy) used to build the two masks.
+# Scenario/object classes: pixels of these are EXCLUDED from the seg mask
+# (seg mask is white where the pixel is NOT one of these -> background).
+object_class_ids: [8, 7, 16, 6, 15, 14, 17, 18, 12, 13, 21, 19, 28, 1, 24]
+# Classes whose pixels form the edge-detection ROI (white = inside the ROI).
+edge_class_ids: [8, 7, 16, 6, 15, 14, 17, 18, 12, 13, 19, 21, 3, 26, 2, 9, 10, 25, 27, 28]
+truth_label: [255, 255, 255]
+false_label: [0, 0, 0]
+fps: 20

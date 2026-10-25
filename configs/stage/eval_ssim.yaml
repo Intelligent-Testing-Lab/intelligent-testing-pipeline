@@ -1,0 +1,3 @@
+name: eval_ssim
+# number of threads to split the per-frame SSIM across
+num_threads: 60

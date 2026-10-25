@@ -1,0 +1,3 @@
+name: eval_iou_temporal
+# YOLO26 semantic-segmentation weights (torchscript)
+yolo_weights: /data/cosmos/cosmos-transfer2.5/evaluation/data/models/yolo26x-sem.torchscript

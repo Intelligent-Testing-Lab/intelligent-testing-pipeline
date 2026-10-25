@@ -1,0 +1,18 @@
+name: inference
+# Path to the cosmos-transfer2.5 repo (so `cosmos_transfer2` is importable).
+cosmos_repo: /data/cosmos/cosmos-transfer2.5
+# cosmos base model (one of: edge, depth, seg, vis). Multicontrol is selected
+# automatically from the per-item hint keys (edge+seg+depth here).
+model: edge
+# Match the original: run with guardrails disabled.
+disable_guardrails: true
+# 1 = single GPU. >1 enables context-parallel (multi-GPU) inference.
+context_parallel_size: 1
+# Guidance / control weights for the guided-generation config.
+guidance: 5
+edge:
+  control_weight: 0.3
+seg:
+  control_weight: 0.1
+depth:
+  control_weight: 0.5

@@ -1,0 +1,3 @@
+name: eval_lpips
+# frames per pyiqa batch (keeps VRAM usage bounded)
+chunk_size: 200
