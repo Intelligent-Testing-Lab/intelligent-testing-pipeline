@@ -1,0 +1,5 @@
+steps:
+  - stage: prompt
+    parallelism: per_item
+    interpreter: /venvs/light/bin/python
+    slurm: {options: {--cpus-per-task: 4}}
