@@ -1,3 +1,4 @@
+from __future__ import annotations
 import logging
 import time
 from abc import ABC, abstractmethod
@@ -28,6 +29,17 @@ class Stage(ABC):
         self.stage = stage
         self.name = type(self).__name__
         self.logger = logging.getLogger(self.name)
+
+    @property
+    def ctx(self) -> dict:
+        """The shared per-item context dict (see :mod:`context`), from ``run.context_file``.
+
+        Read it here; write it back via :func:`context.update` / :func:`context.save`
+        (passing ``self.config.run``) so concurrent/sequential stages stay consistent.
+        """
+        from context import get
+
+        return get(self.config.run)
 
     def run(self) -> None:
         start_time = time.perf_counter()

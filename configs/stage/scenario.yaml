@@ -1,0 +1,53 @@
+name: "scenario"
+pythonpath: "/home/davidg/workspace/carla/open-loop-scenario-generation"
+gene_path: "/home/davidg/workspace/carla/open-loop-scenario-generation/genotypes/example_genes/genotype.yaml"
+gene_bounds: "/home/davidg/workspace/carla/open-loop-scenario-generation/genotypes/gene_bounds/genotype.yaml"
+# simulation settings
+world: "Town05"
+timestep: 0.1
+tick_budget: 93
+segment_pool_size: 20
+route_length_m: 1500.0
+expert_config: None
+npc_mode: "pid"
+pid_gains: {}
+debug: 0
+seed: 2000
+carla_root: "/home/davidg/data/carla/0.9.15/"
+
+oracle:
+  save_freq: 1
+  augment: false
+  augmentation:
+    translation: 0.0
+    rotation: 0.0
+  enabled: [rgb, semantics, depth]
+
+  sensors:
+    rgb:
+      type: sensor.camera.rgb
+      x: -1.5
+      y: 0.0
+      z: 2.0
+      roll: 0.0
+      pitch: 0.0
+      yaw: 0.0
+      width: 1920
+      height: 1080
+      fov: 100
+    semantics:
+      type: sensor.camera.semantic_segmentation
+      x: -1.5
+      y: 0.0
+      z: 2.0
+      width: 1920
+      height: 1080
+      fov: 100
+    depth:
+      type: sensor.camera.depth
+      x: -1.5
+      y: 0.0
+      z: 2.0
+      width: 1920
+      height: 1080
+      fov: 100

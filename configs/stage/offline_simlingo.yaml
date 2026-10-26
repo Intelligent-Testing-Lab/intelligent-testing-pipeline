@@ -1,0 +1,3 @@
+name: "offline_simlingo"
+weights: "/home/davidg/data/scratch/simlingo_weights/simlingo/simlingo/checkpoints/epoch=013.ckpt/pytorch_model.pt"
+pythonpath: "/home/davidg/workspace/research_assistant/simlingo"

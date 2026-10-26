@@ -15,7 +15,7 @@ from abc import ABC, abstractmethod
 from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass, field
 
-from pipeline import Step
+from pipeline import StageDef
 
 logger = logging.getLogger(__name__)
 
@@ -44,7 +44,7 @@ class Executor(ABC):
     """Launch a step's work units in parallel and await them."""
 
     @abstractmethod
-    def run_units(self, step: Step, units: list[WorkUnit]) -> list[UnitResult]:
+    def run_units(self, step: StageDef, units: list[WorkUnit]) -> list[UnitResult]:
         ...
 
 
@@ -59,7 +59,7 @@ class LocalExecutor(Executor):
     def __init__(self, max_workers: int | None = None):
         self.max_workers = max_workers
 
-    def run_units(self, step: Step, units: list[WorkUnit]) -> list[UnitResult]:
+    def run_units(self, step: StageDef, units: list[WorkUnit]) -> list[UnitResult]:
         def run(u: WorkUnit) -> UnitResult:
             cmd = [u.interpreter, "-m", "intelligent_pipeline", *u.argv]
             env = dict(os.environ)

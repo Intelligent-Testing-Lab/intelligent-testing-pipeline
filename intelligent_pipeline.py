@@ -1,3 +1,4 @@
+from __future__ import annotations
 import importlib
 import os
 from pathlib import Path
@@ -27,7 +28,9 @@ STAGE_MAPPING: dict[str, tuple[str, str]] = {
     "eval_iou": ("stages.eval_iou", "IoUMetric"),
     "eval_iou_temporal": ("stages.eval_iou_temporal", "IoUTemporalMetric"),
     "launch_carla": ("stages.carla", "CarlaLauncher"),
-    "cleanup_carla": ("stages.carla", "CarlaCleanup")
+    "cleanup_carla": ("stages.carla", "CarlaCleanup"),
+    "scenario": ("stages.scenario", "Scenario"),
+    "offline_simlingo": ("stages.offline_simlingo", "OfflineSimlingoEval")
 }
 
 def load_stage(name: str):

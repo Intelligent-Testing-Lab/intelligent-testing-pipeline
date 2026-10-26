@@ -16,6 +16,9 @@ run:
 
   batch_size: null
 
+  # Set by the runner for each sub-step of a loop (0-based pass index).
+  loop_iteration: null
+
   # per work-unit inputs, derived from the source run.output_dir
   #
   rgb_input: ${run.output_dir}/sensor_recordings/front_rgb/front_rgb.mp4
@@ -29,6 +32,11 @@ run:
   generation_config: ${run.output_dir}/generation_config.json
   generated_video: ${run.output_dir}/guided_generation.mp4
   results_file: ${run.output_dir}/results.json
+  # Shared per-item context dict (JSON) that flows between stages: step N writes,
+  # step N+1 reads (e.g. launch_carla stores carla host/port/pid here so later stages
+  # connect their own client to the same server). Read via Stage.ctx; write via the
+  # context module (context.update / context.save) with self.config.run.
+  context_file: ${run.output_dir}/pipeline_context.json
 
 
   # --- evaluation inputs / outputs (defaults match the original) ---

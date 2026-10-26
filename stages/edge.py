@@ -1,5 +1,5 @@
 from stage import Stage
-from omegaconf import DictConfig, OmegaConf
+from omegaconf import DictConfig
 import time
 import logging
 

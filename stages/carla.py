@@ -27,7 +27,7 @@ class CarlaOptions():
     pid: int = 0
 
     def build_launch_cmd(self) -> list:
-        carla_process_cmd = ["bash", "-lc", f"exec {self.run_cmd} -RenderOffScreen -quality-level={self.quality} --world-port={self.world_port} --streaming-port={self.streaming_port}"]
+        carla_process_cmd = ["bash", "-lc", f"exec {self.run_cmd} -quality-level={self.quality} --world-port={self.world_port} --streaming-port={self.streaming_port}"]
         return carla_process_cmd
 
 def get_carla_options(config: DictConfig) -> CarlaOptions:
@@ -52,7 +52,7 @@ def get_carla_options(config: DictConfig) -> CarlaOptions:
             streaming_port=obj["streaming_port"],
             pid=obj["pid"]
         )
-    except KeyError as e:
+    except KeyError:
         # we capture here to raise a more verbose error
         raise KeyError("Could not find valid carla option from keys (host, world_port, tm_port, streaming_port, pid). Check the keys are defined in output_dir/carla_options.yaml.")
     return options
@@ -125,9 +125,14 @@ class CarlaLauncher(Stage):
         carla_log = Path(self.config.run.output_dir) / "carla.log"
 
         with carla_log.open("wb") as log_file:
-            print(options.build_launch_cmd())
+            cmd = options.build_launch_cmd()
+
+            if self.config.stage.no_display:
+                cmd[-1] += " -RenderOffScreen"
+
+            print(cmd)
             process = subprocess.Popen(
-                options.build_launch_cmd(),
+                cmd,
                 stdin=subprocess.DEVNULL,
                 stdout=subprocess.DEVNULL,
                 stderr=log_file,
@@ -168,7 +173,7 @@ class CarlaCleanup(Stage):
                 process.terminate()
                 process.wait(timeout=self.config.stage.timeout_wait) # wait 20 seconds for carla to cleanup
         except psutil.TimeoutExpired:
-            logger.error(f"Could not gracefully terminate CARLA process {process.pid}. Attempting to force kill")
+            logger.warning(f"Could not gracefully terminate CARLA process {process.pid}. Attempting to force kill")
             process.kill() # raises an error - could not kill CARLA at all
             process.wait(timeout=self.config.stage.timeout_wait) # wait 20 seconds for carla to cleanup
 

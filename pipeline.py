@@ -45,10 +45,49 @@ class Parallelism:
 
 
 @dataclass
-class Step:
-    """One pipeline step: a stage run across the batch with a parallelism policy."""
+class StopGate:
+    """Optional early-exit gate for a :class:`Loop`.
+
+    After each pass, ``stage`` (a name in ``Pipeline.stages``) runs across the
+    batch. It signals a per-item "done" by writing ``key: True`` into that
+    item's shared context (see :mod:`context`). When every item has signalled,
+    the loop stops (bounded by the loop's ``max_iterations``). Default ``key``
+    is ``"done"``.
+    """
 
     stage: str
+    key: str = "done"
+
+
+@dataclass
+class Loop:
+    """Repeat a set of stage steps, in order, across the same batch.
+
+    ``steps``          -- stage names (keys of ``Pipeline.stages``), run in order each pass.
+    ``count``          -- fixed number of passes (required unless ``stop`` is set).
+    ``stop``           -- optional gate; stop early once every item signals ``stop.key``.
+    ``max_iterations`` -- safety cap when using ``stop`` (default 100).
+
+    Each sub-step runs exactly like a normal step (modular / reusable); the 0-based
+    pass index is exposed to stages via ``run.loop_iteration``.
+    """
+
+    steps: list[str]
+    count: int | None = None
+    stop: StopGate | None = None
+    max_iterations: int | None = None
+
+
+@dataclass
+class StageDef:
+    """Definition of one named stage: which stage class, and how to run it.
+
+    The name (the key in ``Pipeline.stages``) must be a key of ``STAGE_MAPPING``;
+    one definition per stage.
+    """
+
+    stage: str  # STAGE_MAPPING name; equals the key in Pipeline.stages
+    always: bool = False  # run even if a prior step failed (finally-semantics, e.g. cleanup)
     parallelism: Parallelism = field(default_factory=Parallelism)
     batch_size: int | None = None  # forwarded to the stage as run.batch_size (micro-batch)
     interpreter: str | None = None  # python interpreter/venv to run the stage in
@@ -59,14 +98,26 @@ class Step:
 
 
 @dataclass
+class Step:
+    """One pipeline step: a reference to a named stage, OR a loop of stage names.
+
+    Exactly one of ``name`` / ``loop`` is set.
+    """
+
+    name: str | None = None  # key into Pipeline.stages
+    loop: Loop | None = None
+
+
+@dataclass
 class Pipeline:
-    """An ordered set of steps plus the run-level knobs that drive them."""
+    """Stage definitions, an ordered list of steps, and the run-level knobs."""
 
     name: str
-    steps: list[Step]
+    stages: dict[str, StageDef] = field(default_factory=dict)  # name -> definition
+    steps: list[Step] = field(default_factory=list)  # execution order
     executor: str = "local"  # local | slurm | ray
     batch: dict = field(default_factory=dict)  # one of {dirs, manifest, glob}
-    default_interpreter: str | None = None  # fallback interpreter for steps that omit one
+    default_interpreter: str | None = None  # fallback interpreter for defs that omit one
     default_cwd: str | None = None  # working dir for the launched stage subprocesses
 
 

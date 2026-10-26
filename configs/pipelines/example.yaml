@@ -1,10 +1,19 @@
+name: scenario
+stages:
+  launch_carla:
+    parallelism: per_item
+    interpreter:  /home/davidg/workspace/research_assistant/intelligent_pipeline/.venv/bin/python
+  scenario:
+    parallelism: per_item
+    interpreter: /home/davidg/workspace/carla/open-loop-scenario-generation/.venv/bin/python3
+  cleanup_carla:
+    parallelism: per_item
+    interpreter: /home/davidg/workspace/research_assistant/intelligent_pipeline/.venv/bin/python
+  offline_simlingo:
+    parallelism: per_item
+    interpreter: /home/davidg/workspace/research_assistant/simlingo/.venv/bin/python3
 steps:
-  - stage: launch_carla
-    parallelism: per_item
-    interpreter: /home/davidg/workspace/research_assistant/intelligent_pipeline/.venv/bin/python
-  - stage: edge
-    parallelism: per_item
-    interpreter: /home/davidg/workspace/research_assistant/intelligent_pipeline/.venv/bin/python
-  - stage: cleanup_carla
-    parallelism: per_item
-    interpreter: /home/davidg/workspace/research_assistant/intelligent_pipeline/.venv/bin/python
+  - launch_carla
+  - scenario
+  - cleanup_carla
+  - offline_simlingo

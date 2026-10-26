@@ -36,7 +36,7 @@ import time
 from concurrent.futures import ThreadPoolExecutor
 
 from executors import Executor, UnitResult, WorkUnit
-from pipeline import Step
+from pipeline import StageDef
 
 logger = logging.getLogger("pipeline.slurm")
 
@@ -128,7 +128,7 @@ class SlurmExecutor(Executor):
         self.poll_interval = poll_interval
         self.poll_timeout = poll_timeout
 
-    def run_units(self, step: Step, units: list[WorkUnit]) -> list[UnitResult]:
+    def run_units(self, step: StageDef, units: list[WorkUnit]) -> list[UnitResult]:
         spec = step.slurm or {}
         command = str(spec.get("command", "srun"))
         if command == "srun":

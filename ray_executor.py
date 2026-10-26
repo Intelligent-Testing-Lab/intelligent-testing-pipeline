@@ -31,7 +31,7 @@ from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 
 from executors import Executor, UnitResult, WorkUnit
-from pipeline import Step
+from pipeline import StageDef
 
 logger = logging.getLogger("pipeline.ray")
 
@@ -84,7 +84,7 @@ def _ensure_ray() -> None:
         ray.init(ignore_reinit_error=True)
 
 
-def _real_task_runner(argv: list, step: Step) -> tuple[bool, str, str]:
+def _real_task_runner(argv: list, step: StageDef) -> tuple[bool, str, str]:
     """Submit one batch as a Ray task (in-process stage run) and await it."""
     _ensure_ray()
     ray_cfg = step.ray or {}
@@ -113,7 +113,7 @@ def _real_task_runner(argv: list, step: Step) -> tuple[bool, str, str]:
 
 
 def _dispatch(
-    batches: list[list], workers: int, runner, step: Step, interpreter: str
+    batches: list[list], workers: int, runner, step: StageDef, interpreter: str
 ) -> list[UnitResult]:
     """Run each batch via ``runner`` with at most ``workers`` in flight, in order."""
     from runner import _unit_argv
@@ -148,7 +148,7 @@ class RayExecutor(Executor):
         # ``task_runner``: (argv, step) -> (ok, stdout, stderr). None => real Ray.
         self._task_runner = task_runner
 
-    def run_units(self, step: Step, units: list[WorkUnit]) -> list[UnitResult]:
+    def run_units(self, step: StageDef, units: list[WorkUnit]) -> list[UnitResult]:
         items = [it for u in units for it in _unit_items(u)]
         if not items:
             return []
