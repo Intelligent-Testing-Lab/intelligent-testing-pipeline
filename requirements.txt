@@ -3,6 +3,7 @@ omegaconf==2.4.1rc1
 python-dateutil==3.0.0
 pyyaml==6.0.3
 ray==2.59.0
+ribs==0.12.0
 ruamel-yaml==0.19.1
 six==1.17.0
 tomli==2.5.0

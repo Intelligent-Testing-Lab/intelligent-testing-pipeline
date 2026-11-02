@@ -8,14 +8,6 @@ from omegaconf import DictConfig, OmegaConf
 
 PROJECT_ROOT = Path(os.getenv("COSMOS_ROOT", os.getcwd()))  # defaults to the docker container root
 
-# Stage name -> (module path, class name).
-#
-# Stored as strings and resolved lazily (see ``load_stage``) so importing the
-# entrypoint does *not* import every stage's dependencies. This is what allows
-# each stage to run under its own Python interpreter / venv -- the executors
-# launch each unit with the stage's interpreter -- instead of forcing every
-# dependency into one environment.
-#
 # NOTE: add a new entry here after implementing each stage.
 STAGE_MAPPING: dict[str, tuple[str, str]] = {
     "prompt": ("stages.prompt", "PromptStage"),
@@ -30,7 +22,8 @@ STAGE_MAPPING: dict[str, tuple[str, str]] = {
     "launch_carla": ("stages.carla", "CarlaLauncher"),
     "cleanup_carla": ("stages.carla", "CarlaCleanup"),
     "scenario": ("stages.scenario", "Scenario"),
-    "offline_simlingo": ("stages.offline_simlingo", "OfflineSimlingoEval")
+    "offline_simlingo": ("stages.offline_simlingo", "OfflineSimlingoEval"),
+    "cma_me": ("stages.cma_me", "CmaMeStage"),
 }
 
 def load_stage(name: str):

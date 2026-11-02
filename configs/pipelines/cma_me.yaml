@@ -1,0 +1,21 @@
+# Pipeline: CMA-ME quality-diversity mutation of the scenario genotype.
+#
+# `cma_me` is self-contained: it runs the CMA-ME loop in-process (this venv has `ribs`)
+# and dispatches its per-candidate evaluation (launch_carla -> scenario -> cleanup_carla ->
+# offline_simlingo) as subprocesses using the interpreters in configs/stage/cma_me.yaml
+# (see `evaluation_recipe`). So the pipeline only needs to launch the single stage, in the
+# intelligent_pipeline venv.
+#
+# Run from the project root, e.g.:
+#   .venv/bin/python -m intelligent_pipeline pipeline=cma_me \
+#     batch.dirs=/home/davidg/outputs/cma_me_run executor=local
+# (a batch of ONE output dir is fine; cma_me writes everything under <output_dir>/cma_me)
+name: cma_me
+
+stages:
+  cma_me:
+    parallelism: per_item
+    interpreter: /home/davidg/workspace/research_assistant/intelligent_pipeline/.venv/bin/python
+
+steps:
+  - cma_me

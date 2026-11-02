@@ -4,6 +4,9 @@ import time
 from abc import ABC, abstractmethod
 
 from omegaconf import DictConfig, OmegaConf
+from executors import LocalExecutor, WorkUnit
+from pipeline import StageDef
+
 
 
 class PipelineStageError(Exception):
@@ -71,6 +74,26 @@ class Stage(ABC):
                 )
             completion_time = time.perf_counter() - start_time
             self.logger.info("Stage completed: %s in %.2fs", self.name, completion_time)
+
+    def spawn_stage(self, work_unit_name: str, stage: str, output_dir: str, interpreter: str, overrides: list[str]) -> None:
+        """Launch one pipeline stage as a subprocess in the given interpreter's venv.
+
+        Mirrors the ``LocalExecutor`` launch contract: ``<interpreter> -m intelligent_pipeline
+        stage=<stage> run.output_dir=<output_dir> <overrides...>``. Raises on non-zero exit.
+        """
+        argv = [f"stage={stage}", f"run.output_dir={output_dir}"] + list(overrides)
+        unit = WorkUnit(name=f"{work_unit_name}", interpreter=interpreter, argv=argv)
+        results = LocalExecutor().run_units(StageDef(stage=stage), [unit])
+        r = results[0]
+        if not r.ok:
+            raise RuntimeError(
+                f"Stage {stage!r} failed (interpreter={interpreter}); rc!=0.\n"
+                f"STDOUT:\n{r.stdout}\nSTDERR:\n{r.stderr}"
+            )
+
+    @property
+    def _c(self) -> DictConfig:
+        return self.config.stage
 
     @abstractmethod
     def _run(self) -> None:

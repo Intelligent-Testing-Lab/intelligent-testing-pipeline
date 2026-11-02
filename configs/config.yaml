@@ -12,7 +12,7 @@ interpreter: null     # default interpreter for steps that omit one (else curren
 # Every stage reads from here. ``output_dir`` is the unit of work.  A pipeline
 # batch is a list of these ``output_dir`` values.
 run:
-  output_dir: /tmp/cosmos_transfer/run
+  output_dir: /home/davidg/data/experiments/open-loop/test
 
   batch_size: null
 

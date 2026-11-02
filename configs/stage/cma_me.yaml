@@ -1,0 +1,82 @@
+name: cma_me
+
+# starting scenario genotype and bounds
+pythonpath: "/home/davidg/workspace/carla/open-loop-scenario-generation"
+gene_path: "/home/davidg/data/experiments/open-loop/test/genotype.yaml"
+gene_bounds: "/home/davidg/data/experiments/open-loop/test/genotype_bounds.yaml"
+
+# what we mutate (continuous)
+target_genes:
+  - ego.initial_speed
+  - ego.lateral_offset
+  - background_1.relative_distance
+  - background_1.speed
+  - background_1.acceleration
+  - background_1.lane_change_onset_frame
+  - background_2.relative_distance
+  - background_2.speed
+  - background_2.acceleration
+  - background_2.lane_change_onset_frame
+  - background_3.relative_distance
+  - background_3.speed
+  - background_3.acceleration
+  - background_3.lane_change_onset_frame
+  - weather.cloudiness
+  - weather.precipitation
+  - weather.precipitation_deposits
+  - weather.wind_intensity
+  - weather.sun_azimuth_angle
+  - weather.sun_altitude_angle
+  - weather.fog_density
+  - weather.fog_distance
+  - weather.fog_fallof
+  - weather.wetness
+
+# behaviour characteristics
+# refer to classes defined in the CMA-ME stage
+characteristics: [occlusion_ratio, ttc, agents_in_corridor, argmax_err_t]
+measure_dims: [10, 10, 4, 10]        # number of cells per characteristic (GridArchive dims)
+measure_ranges:
+  - [0.0, 1.0]                       # occlusion_ratio
+  - [0.0, 10.0]                      # Time-to-collision
+  - [0.0, 3.0]                       # agents_in_corridor (count)
+  - [0.0, 93.0]                      # argmax_t err[t] (frame index)
+
+# Emitters configuration
+sigma0: 0.2
+batch_size: 8
+seed: 42
+
+# CMA-ME settings
+max_evaluations: 20
+sentinel_objective: -10000 # failure policy
+fitness_frame_index: 16 # index to start evaluation
+
+# behavioural diversity characteristics
+char_occl_frame_range: [16, 93]   # evaluation range
+
+# used to calculate occlusation range and angle
+char_occl_max_forward_m: 20.0     # longitudinal
+char_occl_max_lateral_m: 1.8      # lateral (about 1 lane0
+
+# corridor dimensions
+char_corridor_forward_m: 30.0     # length ahead of the ego
+char_corridor_lateral_m: 3.5      # half-width (roughly one lane + margin)
+
+# time to collision
+char_ttc_horizon_s: 10.0          # default
+
+# pipeline settngs
+carla_scope: per_candidate
+evaluation_recipe:
+  - stage: launch_carla
+    interpreter: "/home/davidg/workspace/research_assistant/intelligent_pipeline/.venv/bin/python"
+  - stage: scenario
+    interpreter: "/home/davidg/workspace/carla/open-loop-scenario-generation/.venv/bin/python3"
+  - stage: cleanup_carla
+    interpreter: "/home/davidg/workspace/research_assistant/intelligent_pipeline/.venv/bin/python"
+  - stage: offline_simlingo
+    interpreter: "/home/davidg/workspace/research_assistant/simlingo/.venv/bin/python3"
+
+save_elites: true
+save_archive_plot: false

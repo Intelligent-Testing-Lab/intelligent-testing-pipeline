@@ -1,3 +1,12 @@
 name: "offline_simlingo"
 weights: "/home/davidg/data/scratch/simlingo_weights/simlingo/simlingo/checkpoints/epoch=013.ckpt/pytorch_model.pt"
 pythonpath: "/home/davidg/workspace/research_assistant/simlingo"
+
+# Recorded data to replay (one directory per scenario recording).
+input_dir: "/home/davidg/Documents/demo/"
+rgb_dir: "rgb"                # relative to input_dir; one image per frame
+measurements_dir: "measurements"  # relative to input_dir; <frame>.json.gz per frame
+start_index: 16
+
+# Predictions CSV, written to run.output_dir (relative or absolute).
+output_csv: "simlingo_predictions.csv"
