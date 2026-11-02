@@ -245,6 +245,7 @@ class CmaMeStage(Stage):
         scope = str(self._c.carla_scope)
         if scope != "per_candidate":
             self.logger.warning("carla_scope=%r is not implemented yet; falling back to per-candidate evaluation.", scope)
+        self._init_run_csvs()
         self._run_loop(scheduler)
         self._write_outputs(archive)
 
@@ -264,15 +265,24 @@ class CmaMeStage(Stage):
             round_idx += 1
             stats = scheduler.archive.stats
             self.logger.info(
-                "Round %d: evaluated %d (total %d/%d) | elites=%d | obj_max=%s",
-                round_idx, int(len(sols)), total, max_evals, stats.num_elites, stats.obj_max,
+                "Round %d: evaluated %d (total %d/%d) | elites=%d | obj_max=%s | qd=%s",
+                round_idx, int(len(sols)), total, max_evals, stats.num_elites, stats.obj_max, stats.qd_score,
             )
             self._convergence.append({
                 "round": round_idx,
                 "evaluated_total": total,
                 "num_elites": int(stats.num_elites),
                 "obj_max": float(stats.obj_max),
+                "obj_mean": float(stats.obj_mean),
+                "coverage": float(stats.coverage),
+                "qd_score": float(stats.qd_score),
+                "norm_qd_score": float(stats.norm_qd_score),
             })
+            self._csv_append(self._out_dir() / "cma_me_convergence.csv", [
+                round_idx, total, int(stats.num_elites),
+                float(stats.obj_max), float(stats.obj_mean),
+                float(stats.coverage), float(stats.qd_score), float(stats.norm_qd_score),
+            ])
 
     def _run_candidates(
         self, sols: np.ndarray, sentinel: float, round_idx: int
@@ -288,18 +298,24 @@ class CmaMeStage(Stage):
         measures = np.tile(self._default_measure(), (len(sols), 1))
         for i, sol in enumerate(sols):
             candidate_dir = self._candidate_dir(round_idx, i)
+            success = False
             try:
                 gene = self._build_gene(sol)
                 self._evaluate_candidate(candidate_dir, gene)
                 objectives[i] = self._fitness(candidate_dir)
                 measures[i] = self._characteristics(candidate_dir, gene)
+                success = True
             except Exception:
                 self.logger.exception("Candidate r%d_%d failed; recording sentinel objective.", round_idx, i)
+                objectives[i] = sentinel
                 # objectives[i] / measures[i] keep their sentinel / default values.
+            row = [round_idx, i, f"r{round_idx}_{i}", success, float(objectives[i])]
+            row += [float(v) for v in measures[i]]
+            self._csv_append(self._out_dir() / "cma_me_candidates.csv", row)
         return objectives, measures
 
     def _candidate_dir(self, round_idx: int, i: int) -> Path:
-        return Path(self.config.run.output_dir) / "cma_me" / "candidates" / f"r{round_idx}_{i}"
+        return self._out_dir() / "candidates" / f"r{round_idx}_{i}"
 
     def _evaluate_candidate(self, candidate_dir: Path, gene: dict) -> None:
         """Materialise the candidate gene and run the evaluation recipe in order.
@@ -348,9 +364,48 @@ class CmaMeStage(Stage):
                 f"STDOUT:\n{r.stdout}\nSTDERR:\n{r.stderr}"
             )
 
+    def _out_dir(self) -> Path:
+        """The stage's output directory (``<output_dir>/cma_me``) for archives, CSVs and elites."""
+        return Path(self.config.run.output_dir) / "cma_me"
+
+    def _init_run_csvs(self) -> None:
+        """Create the run CSV logs (headers only) before the search starts.
+
+        ``cma_me_candidates.csv`` -- one row per evaluated candidate (objective + the
+        configured characteristics; failed candidates keep their sentinel/default values
+        and are flagged ``success=False``).
+        ``cma_me_convergence.csv`` -- one row per round with the archive's quality/
+        diversity stats (elites, obj max/mean, coverage, QD score).
+        """
+        char_names = [str(c) for c in self._c.characteristics]
+        n_ranges = len(list(self._c.measure_ranges))
+        if len(char_names) != n_ranges:
+            raise ValueError(
+                f"characteristics ({len(char_names)}) and measure_ranges ({n_ranges}) "
+                "must be the same length (one characteristic per measure axis)."
+            )
+        self._csv_header(
+            self._out_dir() / "cma_me_candidates.csv",
+            ["round", "index", "candidate", "success", "objective", *char_names],
+        )
+        self._csv_header(
+            self._out_dir() / "cma_me_convergence.csv",
+            ["round", "evaluated_total", "num_elites", "obj_max", "obj_mean",
+             "coverage", "qd_score", "norm_qd_score"],
+        )
+
+    def _csv_header(self, path: Path, header: list[str]) -> None:
+        path.parent.mkdir(parents=True, exist_ok=True)
+        with open(path, "w", newline="") as f:
+            csv.writer(f).writerow(header)
+
+    def _csv_append(self, path: Path, row: list) -> None:
+        with open(path, "a", newline="") as f:
+            csv.writer(f).writerow(row)
+
     def _write_outputs(self, archive: archives.GridArchive) -> None:
         """Export the archive, best elite, all elites (as gene YAMLs), and a convergence summary."""
-        out = Path(self.config.run.output_dir) / "cma_me"
+        out = self._out_dir()
         out.mkdir(parents=True, exist_ok=True)
 
         # 1) full archive (all elites): JSON + CSV
